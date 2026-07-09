@@ -11,7 +11,7 @@ from typing import Callable, Optional
 
 import cv2
 import numpy as np
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QGroupBox, QHBoxLayout, QLabel,
@@ -32,6 +32,16 @@ _RESOLUTIONS = [(640, 480), (1280, 720), (1920, 1080), (2560, 1440), (3840, 2160
 _FPS_CHOICES = [30, 60]
 
 
+class _PreviewLabel(QLabel):
+    """Preview label that emits a signal on double-click (toggles fullscreen)."""
+
+    doubleClicked = Signal()
+
+    def mouseDoubleClickEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        self.doubleClicked.emit()
+        super().mouseDoubleClickEvent(event)
+
+
 class MainWindow(QMainWindow):
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -40,6 +50,7 @@ class MainWindow(QMainWindow):
         self.worker: Optional[ProcessingWorker] = None
         self._last_frame: Optional[np.ndarray] = None
         self._rgb_ref: Optional[np.ndarray] = None
+        self._fullscreen = False
 
         self.setWindowTitle("Offline Face Replacement — MVP")
         self.resize(1240, 820)
@@ -51,13 +62,16 @@ class MainWindow(QMainWindow):
         central = QWidget()
         root = QHBoxLayout(central)
 
-        self.preview = QLabel("Starting camera…")
+        self.preview = _PreviewLabel("Starting camera…")
         self.preview.setAlignment(Qt.AlignCenter)
         self.preview.setMinimumSize(800, 600)
         self.preview.setStyleSheet("background:#101014; color:#8888aa;")
+        self.preview.setToolTip("Double-click to toggle fullscreen (F11)")
+        self.preview.doubleClicked.connect(self.toggle_fullscreen)
         root.addWidget(self.preview, stretch=3)
 
         panel = QVBoxLayout()
+        panel.addWidget(self._view_group())
         panel.addWidget(self._camera_group())
         panel.addWidget(self._object_group())
         panel.addWidget(self._image_group())
@@ -72,6 +86,7 @@ class MainWindow(QMainWindow):
         scroll.setWidget(holder)
         scroll.setWidgetResizable(True)
         scroll.setFixedWidth(360)
+        self._panel = scroll
         root.addWidget(scroll, stretch=1)
 
         self.setCentralWidget(central)
@@ -92,6 +107,14 @@ class MainWindow(QMainWindow):
         s.sliderReleased.connect(lambda: self.config.save(section))
         layout.addWidget(s)
         return s
+
+    def _view_group(self) -> QGroupBox:
+        box = QGroupBox("View")
+        v = QVBoxLayout(box)
+        self.fs_btn = QPushButton("⛶  Fullscreen (F11)")
+        self.fs_btn.clicked.connect(self.toggle_fullscreen)
+        v.addWidget(self.fs_btn)
+        return box
 
     def _camera_group(self) -> QGroupBox:
         box = QGroupBox("Camera")
@@ -281,6 +304,32 @@ class MainWindow(QMainWindow):
         is_image = self.engine.mode == "image"
         self.image_box.setVisible(is_image)
         self.model_box.setVisible(not is_image)
+
+    # -- fullscreen ----------------------------------------------------------
+    def toggle_fullscreen(self) -> None:
+        """Toggle fullscreen; hides the control panel so the preview fills the screen."""
+        self._fullscreen = not self._fullscreen
+        if self._fullscreen:
+            self._panel.hide()
+            self.fs_btn.setText("⛶  Exit Fullscreen (F11)")
+            self.showFullScreen()
+            self.status.showMessage(
+                "Fullscreen — press F11 or Esc to exit, or double-click the preview")
+        else:
+            self._panel.show()
+            self.fs_btn.setText("⛶  Fullscreen (F11)")
+            self.showNormal()
+            self.status.showMessage("Ready", 3000)
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        key = event.key()
+        if key == Qt.Key_F11:
+            self.toggle_fullscreen()
+            return
+        if key == Qt.Key_Escape and self._fullscreen:
+            self.toggle_fullscreen()
+            return
+        super().keyPressEvent(event)
 
     # -- image handlers ------------------------------------------------------
     def _overlay_name(self) -> str:
