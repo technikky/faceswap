@@ -1,0 +1,9 @@
+{
+  "output_dir": "recordings",
+  "codec": "h264",
+  "fps": 30,
+  "bitrate": "8M",
+  "container": "mp4",
+  "snapshot_dir": "snapshots",
+  "snapshot_format": "png"
+}

@@ -1,0 +1,24 @@
+# Offline Face Replacement — MVP dependencies
+# Python 3.10 or 3.11 recommended (MediaPipe wheels).
+#
+# For offline install, download these wheels into offline-sdk/python-wheels/
+# and install with:  pip install --no-index --find-links offline-sdk/python-wheels -r requirements.txt
+
+numpy>=1.24,<2.0
+opencv-python>=4.8,<5.0
+mediapipe>=0.10.9        # uses the Tasks API; face_landmarker.task model is
+                         #   bundled under assets/models/mediapipe/ (fetched by
+                         #   bundle_offline_sdk.ps1)
+PySide6>=6.5,<6.9
+imageio-ffmpeg>=0.4.9      # bundles a static ffmpeg.exe for H.264 recording
+
+# --- Audio (FR-007): playback + pitch + muxing ---
+soundfile>=0.12.1         # libsndfile >=1.1 decodes WAV / OGG / MP3
+sounddevice>=0.4.6        # PortAudio playback
+
+# --- 3D models (FR-004 3D): FBX / OBJ / glTF ---
+trimesh>=4.0              # loads OBJ, glTF/GLB natively; FBX via assimp
+moderngl>=5.8             # offscreen OpenGL rendering of the model
+# FBX additionally requires the assimp runtime. Install one of:
+#   pip install pyassimp        (needs the native assimp library present)
+# or convert FBX -> glTF/OBJ once (e.g. Blender) for a dependency-free path.

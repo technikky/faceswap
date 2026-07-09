@@ -1,0 +1,12 @@
+{
+  "model_path": "D:/tools-offline/1Project/faceswap/test/sample-model-2.obj",
+  "opacity": 1.0,
+  "scale": 1.62,
+  "size_factor": 2.74,
+  "offset_x": 0.0,
+  "offset_y": 0.0,
+  "rot_x": -2.0,
+  "rot_y": 0.0,
+  "rot_z": 0.0,
+  "render_size": 512
+}

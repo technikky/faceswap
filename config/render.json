@@ -1,0 +1,14 @@
+{
+  "mode": "model",
+  "overlay_image": "",
+  "enabled": true,
+  "opacity": 1.0,
+  "scale": 1.0,
+  "rotation_offset_deg": 0.0,
+  "offset_x": 0.0,
+  "offset_y": 0.0,
+  "size_reference": "bbox",
+  "size_factor": 1.7,
+  "follow_rotation": true,
+  "smoothing": 0.5
+}
